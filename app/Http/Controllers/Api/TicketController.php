@@ -1,0 +1,113 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Ticket;
+use App\Services\TicketClassifier;
+
+class TicketController extends Controller
+{
+    protected $classifier;
+
+    public function __construct(TicketClassifier $classifier)
+    {
+        $this->classifier = $classifier;
+    }
+
+    public function index()
+    {
+        return Ticket::all();
+    }
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'subject' => 'required|string|max:255',
+            'body' => 'required|string',
+            'status' => 'required|string|in:open,closed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }   
+
+        $Ticket = Ticket::create($request->all());
+        return response()->json($Ticket, 201);
+    }
+
+    public function show($id)
+    {
+         $ticket = Ticket::find($id);
+
+        if (!$ticket) {
+            return response()->json([
+                'message' => 'Ticket not found'
+            ], 404);
+        }
+
+        return response()->json($ticket, 200);
+    }
+
+    public function update(Request $request, $id)
+    {
+        // Find ticket
+        $ticket = Ticket::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            'subject' => 'required|string|max:255',
+            'body' => 'required|string',
+            'status' => 'required|string|in:open,closed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        } 
+        $validated = $validator->validated();
+
+        // Update fields
+        $ticket->update($validated);
+       
+        return response()->json([
+            'message' => 'Ticket updated successfully',
+            'data' => $ticket
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        $ticket = Ticket::find($id);
+
+        if (!$ticket) {
+            return response()->json([
+                'message' => 'Ticket not found'
+            ], 404);
+        }
+
+        Ticket::destroy($id);
+
+        return response()->json("Ticket deleted", 204);
+    }
+
+    public function classify($id, TicketClassifier $classifier)
+    {
+        $ticket = Ticket::findOrFail($id);
+
+        $category = $classifier->classify($ticket->description);
+
+        $ticket->update(['category' => $category]);
+
+        return response()->json([
+            'message' => 'Ticket classified',
+            'category' => $category
+        ]);
+    }
+}
