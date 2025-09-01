@@ -10,8 +10,6 @@ class TicketSeeder extends Seeder
 {
     public function run(): void
     {
-      DB::enableQueryLog();
-        Ticket::factory()->count(1)->create();
-        dd(DB::getQueryLog());
+        Ticket::factory()->count(6)->create();
     }
 }

@@ -22,10 +22,10 @@ class TicketFactory extends Factory
             'subject' => $this->faker->randomLetter(),
             'body' => $this->faker->paragraph,
             'status' => $this->faker->randomElement(['open', 'closed']),
-            'category' => $this->faker->name,
+            'category' => $this->faker->randomElement(['Bug','Feature','Improvment','Task','Epic','Support']),
             'notes' => $this->faker->realText(10),
             'explanation' => $this->faker->word(),
-            'confidence' => $this->faker->word(),
+            'confidence' => $this->faker->randomFloat(2, 0, 1),
         ];
     }
 }
