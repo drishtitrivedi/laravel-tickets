@@ -11,7 +11,7 @@ class TicketClassifier
      * Classify the content of a ticket using OpenAI.
      * Job: php artisan make:job ClassifyTicket
      */
-    public function classify(Ticket $ticket): string
+    public function classify(Ticket $ticket): array
     {
         if (!config('services.openai.classify_enabled', true)) {
             return [
@@ -33,13 +33,34 @@ class TicketClassifier
         Description: {$ticket->body}
         PROMPT;
 
+        try {
         $response = OpenAI::chat()->create([
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-3.5-turbo',
             'messages' => [
-                ['role' => 'system', 'content' => 'Always respond ONLY with valid JSON containing category, explanation, confidence.'],
+                ['role' => 'system', 'content' => 'You are a classifier. Respond in JSON.'],
                 ['role' => 'user', 'content' => $prompt],
             ],
         ]);
+
+        return $response->choices[0]->message->content ?? null;
+
+    } catch (ErrorException $e) {
+        \Log::error('OpenAI general error', [
+            'exception' => get_class($e),
+            'message'   => $e->getMessage(),
+            'trace'     => $e->getTraceAsString(),
+        ]);
+        return ['error' => 'OpenAI general error'];
+
+    } catch (\Throwable $e) {
+        // 🔴 Catch-all for everything else
+        \Log::error('Unexpected error calling OpenAI', [
+            'exception' => get_class($e),
+            'message'   => $e->getMessage(),
+            'trace'     => $e->getTraceAsString(),
+        ]);
+        return ['error' => $e->getMessage()]; // now shows the actual error
+    }
 
         $content = $response->choices[0]->message->content ?? '{}';
         $data = json_decode($content, true);

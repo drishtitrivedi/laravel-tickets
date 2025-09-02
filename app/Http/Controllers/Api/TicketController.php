@@ -108,7 +108,7 @@ class TicketController extends Controller
         // }
 
         $result = $this->classifier->classify($ticket);
-
+dd($result);
         if ($ticket->isDirty('category') && $ticket->wasChanged('category')) {
             // keep manual category, but update explanation & confidence
             $data = [
