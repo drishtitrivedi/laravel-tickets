@@ -27,10 +27,10 @@ class ClassifyTicket implements ShouldQueue
         $result = $classifier->classify($this->ticket);
 
         // If user manually changed category, preserve it
-        $category = $this->ticket->isDirty('category') ? $this->ticket->category : $result['category'];
+        $result = $this->ticket->isDirty('category') ? $this->ticket->category : $result['category'];
 
         $this->ticket->update([
-            'category' => $category,
+            'category' => $result['category'],
             'explanation' => $result['explanation'],
             'confidence' => $result['confidence'],
         ]);

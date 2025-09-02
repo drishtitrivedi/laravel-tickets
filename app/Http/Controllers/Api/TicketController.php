@@ -102,32 +102,39 @@ class TicketController extends Controller
     {
         $ticket = Ticket::findOrFail($id);
 
-        // if (!RateLimiter::tooManyAttempts("ticket-classify", 30)) {
-        //     RateLimiter::hit("ticket-classify");
-        //     $result = $this->classifier->classify($ticket);
-        // }
+        if (!RateLimiter::tooManyAttempts("ticket-classify", 30)) {
+            RateLimiter::hit("ticket-classify");
+            $result = $this->classifier->classify($ticket);
+        }
 
         $result = $this->classifier->classify($ticket);
-dd($result);
+
+        $data = json_decode($result, true);
+
         if ($ticket->isDirty('category') && $ticket->wasChanged('category')) {
             // keep manual category, but update explanation & confidence
-            $data = [
-                'explanation' => $result['explanation'],
-                'confidence' => $result['confidence'],
+            $res = [
+                'explanation' => $data['explanation'],
+                'confidence' => $data['confidence'],
             ];
         } else {
-             $data = [
-                'category' => $result['category'],
-                'explanation' => $result['explanation'],
-                'confidence' => $result['confidence'],
+             $res = [
+                'category' => $data['category'],
+                'explanation' => $data['explanation'],
+                'confidence' => $data['confidence'],
             ];
         }
-        //$ticket->update(['category' => $category]);
-        //ClassifyTicket::dispatch($ticket);
+
+        $ticket->update([
+            'category'     => $data['category'],
+            'explanation'  => $data['explanation'],
+            'confidence'   => $data['confidence'],
+        ]);
+
 
         return response()->json([
             'message' => 'Ticket classified',
-            'data' => $data
+            'data' => $ticket
         ]);
     }
 }
