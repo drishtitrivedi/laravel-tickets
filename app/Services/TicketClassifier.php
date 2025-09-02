@@ -9,22 +9,51 @@ class TicketClassifier
 {
     /**
      * Classify the content of a ticket using OpenAI.
+     * Job: php artisan make:job ClassifyTicket
      */
     public function classify(Ticket $ticket): string
     {
-        $prompt = "Classify the following support ticket into a category: " . $ticket->description;
+        if (!config('services.openai.classify_enabled', true)) {
+            return [
+                'category' => $this->randomCategory(),
+                'explanation' => 'Dummy explanation since classification is disabled.',
+                'confidence' => 'Low',
+            ];
+        }
 
-        $response = OpenAI::responses()->create([
-            'model' => 'gpt-4.1-mini',
-            'input' => $prompt,
+        $prompt = <<<PROMPT
+        You are a ticket classification assistant.
+        Classify the following ticket and respond ONLY in JSON with these keys:
+        - category (Bug, Feature Request, Question, Other)
+        - explanation (why you chose that category)
+        - confidence (between 0 and 1)
+
+        Ticket:
+        Title: {$ticket->subject}
+        Description: {$ticket->body}
+        PROMPT;
+
+        $response = OpenAI::chat()->create([
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'system', 'content' => 'Always respond ONLY with valid JSON containing category, explanation, confidence.'],
+                ['role' => 'user', 'content' => $prompt],
+            ],
         ]);
 
-        // Extract the text result
-        $classification = $response->output_text ?? 'uncategorized';
+        $content = $response->choices[0]->message->content ?? '{}';
+        $data = json_decode($content, true);
 
-        // Update the ticket with classification
-        $ticket->update(['classification' => $classification]);
+        return $data ?: [
+            'category' => 'Other',
+            'explanation' => 'Could not parse response.',
+            'confidence' => 'Low',
+        ];
+    }
 
-        return $classification;
+    private function randomCategory(): string
+    {
+        $categories = ['Bug', 'Feature Request', 'Question', 'Other'];
+        return $categories[array_rand($categories)];
     }
 }

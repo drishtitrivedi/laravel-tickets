@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'openai' => [
+      'classify_enabled' => env('OPENAI_CLASSIFY_ENABLED', true),
+    ],
+
 ];

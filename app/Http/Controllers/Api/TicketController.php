@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Ticket;
 use App\Services\TicketClassifier;
+use Illuminate\Support\Facades\RateLimiter;
 
 class TicketController extends Controller
 {
@@ -97,17 +98,36 @@ class TicketController extends Controller
         return response()->json("Ticket deleted", 204);
     }
 
-    public function classify($id, TicketClassifier $classifier)
+    public function classify($id)
     {
         $ticket = Ticket::findOrFail($id);
 
-        $category = $classifier->classify($ticket->description);
+        // if (!RateLimiter::tooManyAttempts("ticket-classify", 30)) {
+        //     RateLimiter::hit("ticket-classify");
+        //     $result = $this->classifier->classify($ticket);
+        // }
 
-        $ticket->update(['category' => $category]);
+        $result = $this->classifier->classify($ticket);
+
+        if ($ticket->isDirty('category') && $ticket->wasChanged('category')) {
+            // keep manual category, but update explanation & confidence
+            $data = [
+                'explanation' => $result['explanation'],
+                'confidence' => $result['confidence'],
+            ];
+        } else {
+             $data = [
+                'category' => $result['category'],
+                'explanation' => $result['explanation'],
+                'confidence' => $result['confidence'],
+            ];
+        }
+        //$ticket->update(['category' => $category]);
+        //ClassifyTicket::dispatch($ticket);
 
         return response()->json([
             'message' => 'Ticket classified',
-            'category' => $category
+            'data' => $data
         ]);
     }
 }
