@@ -11,7 +11,7 @@ class TicketClassifier
      * Classify the content of a ticket using OpenAI.
      * Job: php artisan make:job ClassifyTicket
      */
-    public function classify(Ticket $ticket): array
+    public function classify(Ticket $ticket): string
     {
         if (!config('services.openai.classify_enabled', true)) {
             return [

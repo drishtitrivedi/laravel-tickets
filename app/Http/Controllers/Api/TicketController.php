@@ -113,24 +113,17 @@ class TicketController extends Controller
 
         if ($ticket->isDirty('category') && $ticket->wasChanged('category')) {
             // keep manual category, but update explanation & confidence
-            $res = [
-                'explanation' => $data['explanation'],
-                'confidence' => $data['confidence'],
-            ];
+            $ticket->update([
+                'explanation'  => $data['explanation'],
+                'confidence'   => $data['confidence'],
+            ]);
         } else {
-             $res = [
-                'category' => $data['category'],
-                'explanation' => $data['explanation'],
-                'confidence' => $data['confidence'],
-            ];
-        }
-
-        $ticket->update([
+            $ticket->update([
             'category'     => $data['category'],
             'explanation'  => $data['explanation'],
             'confidence'   => $data['confidence'],
         ]);
-
+        }
 
         return response()->json([
             'message' => 'Ticket classified',
