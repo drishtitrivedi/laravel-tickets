@@ -107,8 +107,6 @@ class TicketController extends Controller
             $result = $this->classifier->classify($ticket);
         }
 
-        $result = $this->classifier->classify($ticket);
-
         $data = json_decode($result, true);
 
         if ($ticket->isDirty('category') && $ticket->wasChanged('category')) {
