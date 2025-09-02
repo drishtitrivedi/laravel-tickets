@@ -9,6 +9,8 @@ This project demonstrates authentication, ticket management, and AI-powered clas
  git clone https://github.com/drishtitrivedi/laravel-tickets.git
  
  cd .\laravel-tickets\
+
+ cp .env.example .env
  
  composer install
 
