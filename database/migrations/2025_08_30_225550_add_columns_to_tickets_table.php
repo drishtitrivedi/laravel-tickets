@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('Tickets', function (Blueprint $table) {
             $table->string('category')->nullable()->after('status');
             $table->text('notes')->nullable()->after('category');
-            $table->string('explanation')->nullable()->after('notes');
+            $table->text('explanation')->nullable()->after('notes');
             $table->string('confidence')->nullable()->after('explanation');
         });
     }
