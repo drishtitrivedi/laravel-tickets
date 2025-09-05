@@ -1,4 +1,4 @@
-# Ticketing System – Vue + Laravel
+# Ticketing System – Vue + Laravel + OpenAI
 
 A full-stack ticketing system built with **Laravel** (backend) and **Vue 3** (frontend).  
 This project demonstrates authentication, ticket management, and AI-powered classification.
